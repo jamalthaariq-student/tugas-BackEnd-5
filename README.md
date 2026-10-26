@@ -1,51 +1,93 @@
-# Laporan Tugas: Spesifikasi dan Standardisasi REST API
+# Tugas Backend 5: REST API Flask
 
-## Identitas Proyek
+REST API sederhana untuk mengelola kategori, item/produk, dan user. Aplikasi menggunakan Flask Blueprint dan memisahkan routing, validasi/logika bisnis, serta penyimpanan data mock.
 
-- Proyek: Tugas Backend 5
-- Framework: Flask
-- Versi API: v1 (`/api/v1`)
-- Repository GitHub: Belum diunggah. Remote lokal saat ini menunjuk ke [repository Tugas Backend 4](https://github.com/jamalthaariq-student/tugas-backend-modular-app-p4), bukan tujuan yang terkonfirmasi untuk tugas ini.
-- Link laporan Google Drive: [Tempelkan link file Google Drive setelah laporan diunggah]
-- Learning Class STIKOM: [Kirim link Google Drive laporan pada kelas]
+## Struktur Proyek
 
-## Tujuan dan Desain
+```text
+app/
+├── __init__.py
+├── config.py
+├── repositories/
+│   ├── product_repo.py
+│   └── user_repo.py
+├── routes/v1/
+│   ├── product_routes.py
+│   └── users_routes.py
+├── services/
+│   ├── product_service.py
+│   └── user_service.py
+└── utils/response_helper.py
+run.py
+requirements.txt
+README.md
+LAPORAN_TUGAS.md
+```
 
-API menyediakan resource `categories` dan `items` yang berelasi. Setiap item mengacu pada kategori melalui field `category` yang berisi nama kategori. Kategori dan produk dapat ditelusuri melalui `GET /api/v1/categories` dan `GET /api/v1/items`; daftar item juga dapat difilter memakai query `category` dan `min_price`.
+Route menerima HTTP request dan mengembalikan respons melalui `response_helper.py`. Service menjalankan validasi dan logika bisnis. Repository mengelola data mock untuk produk/kategori dan user secara terpisah.
 
-Endpoint versi pertama memakai prefix `/api/v1` agar perubahan kontrak berikutnya dapat diperkenalkan sebagai versi baru tanpa mengubah klien versi lama. Aplikasi memisahkan routing, service, dan repository. Seluruh endpoint menggunakan `success_response` atau `fail_response` dari `app/utils/response_helper.py`. Error validasi memuat nama field dan alasan kesalahannya.
+## Persiapan dan Menjalankan
 
-## Tabel Spesifikasi Endpoint
+Pastikan Python tersedia, lalu jalankan dari direktori proyek:
 
-| Method | URI                       | Input                                                                                                                                                          | Respons sukses                                                                | Respons gagal                                                                                                          |
-| ------ | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/v1/categories`      | Tidak ada                                                                                                                                                      | `200 OK`; `data.categories` adalah daftar kategori dan `data.total` jumlahnya | Tidak ada kegagalan bisnis yang didefinisikan                                                                          |
-| GET    | `/api/v1/items`           | Query opsional: `category` (string), `min_price` (integer)                                                                                                     | `200 OK`; `data.items` berisi hasil dan `data.total` jumlahnya                | `min_price` yang tidak dapat diparse sebagai integer tidak menghasilkan error; parser Flask mengembalikan nilai kosong |
-| GET    | `/api/v1/items/<item_id>` | `item_id` integer pada URI                                                                                                                                     | `200 OK`; `data` berisi item                                                  | `404 Not Found`; `errors` berisi `field: item_id` dan alasan barang tidak ditemukan                                    |
-| POST   | `/api/v1/items`           | JSON object wajib berisi `name` string nonkosong, `category` dari daftar kategori, `price` angka lebih besar dari 0; `stock` opsional integer >= 0 (default 0) | `201 Created`; `data` berisi item baru                                        | `400 Bad Request`; `errors` mencantumkan setiap field dan alasan validasi                                              |
-| PUT    | `/api/v1/items/<item_id>` | JSON object parsial; field yang didukung: `name`, `category`, `price`, `stock`                                                                                 | `200 OK`; `data` berisi item setelah diperbarui                               | `400 Bad Request` untuk nilai tidak valid; `404 Not Found` untuk ID yang tidak ada                                     |
-| DELETE | `/api/v1/items/<item_id>` | `item_id` integer pada URI                                                                                                                                     | `200 OK`; pesan penghapusan berhasil                                          | `404 Not Found`; `errors` berisi `field: item_id` dan alasan barang tidak ditemukan                                    |
-| GET    | `/api/v1/users`           | Tidak ada                                                                                                                                                      | `200 OK`; `data.users` dan `data.total`                                       | Tidak ada kegagalan bisnis yang didefinisikan                                                                          |
-| POST   | `/api/v1/users`           | JSON object dengan `username` nonkosong, `email` dengan format dasar yang memuat `@`, dan `role: "user"`                                                       | `201 Created`; `data` berisi user baru                                        | `400 Bad Request`; `errors` menyebut field dan alasan, termasuk jika Content-Type bukan JSON                           |
+```bash
+pip install -r requirements.txt
+python run.py
+```
 
-Semua request yang mengirim body harus menggunakan `Content-Type: application/json`.
+Server berjalan pada `http://127.0.0.1:5000`.
+
+## API v1
+
+Semua endpoint memakai prefix `/api/v1`. Relasi produk dan kategori ditunjukkan oleh field `category` pada setiap item, yang nilainya harus cocok dengan nama kategori tersedia. Request dengan body harus menggunakan `Content-Type: application/json`.
+
+| Method | URI                       | Input                                              | Respons sukses                                   | Respons gagal                                               |
+| ------ | ------------------------- | -------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------- |
+| GET    | `/api/v1/categories`      | Tidak ada                                          | `200`; daftar kategori dan jumlahnya pada `data` | Tidak ada kegagalan bisnis yang didefinisikan               |
+| GET    | `/api/v1/items`           | Query opsional `category` dan `min_price`          | `200`; daftar item dan jumlah hasil pada `data`  | `min_price` yang bukan integer tidak dipakai sebagai filter |
+| GET    | `/api/v1/items/<item_id>` | ID integer di URI                                  | `200`; item pada `data`                          | `404`; error berisi field `item_id` dan alasan              |
+| POST   | `/api/v1/items`           | `name`, `category`, `price`; `stock` opsional      | `201`; item baru pada `data`                     | `400`; error validasi berisi field dan alasan               |
+| PUT    | `/api/v1/items/<item_id>` | JSON parsial: `name`, `category`, `price`, `stock` | `200`; item yang diperbarui pada `data`          | `400`; input tidak valid. `404`; item tidak ditemukan       |
+| DELETE | `/api/v1/items/<item_id>` | ID integer di URI                                  | `200`; pesan berhasil dihapus                    | `404`; error berisi field `item_id` dan alasan              |
+| GET    | `/api/v1/users`           | Tidak ada                                          | `200`; daftar user dan jumlahnya pada `data`     | Tidak ada kegagalan bisnis yang didefinisikan               |
+| POST   | `/api/v1/users`           | `username`, `email`, dan `role: "user"`            | `201`; user baru pada `data`                     | `400`; error validasi berisi field dan alasan               |
+
+### Contoh Request
+
+Menambahkan item. Harga wajib lebih besar dari 0; stok harus berupa bilangan bulat nonnegatif dan default-nya `0` jika tidak dikirim.
+
+```json
+{
+  "name": "Kaos Sablon",
+  "category": "Pakaian",
+  "price": 100000,
+  "stock": 8
+}
+```
+
+Mendaftarkan user:
+
+```json
+{
+  "username": "pengguna_baru",
+  "email": "pengguna@example.com",
+  "role": "user"
+}
+```
 
 ## Format Respons
 
-Contoh sukses:
+Respons sukses menggunakan format berikut:
 
 ```json
 {
   "status": "success",
   "message": "Success",
-  "data": {
-    "categories": [{ "id": 1, "name": "Elektronik" }],
-    "total": 1
-  }
+  "data": {}
 }
 ```
 
-Contoh gagal validasi:
+Respons gagal validasi menyebut field dan alasannya:
 
 ```json
 {
@@ -55,20 +97,11 @@ Contoh gagal validasi:
 }
 ```
 
-## Aturan Validasi
+## Aturan Data
 
-- `name` wajib berupa string dan tidak boleh kosong.
-- `category` untuk produk wajib cocok dengan kategori yang tersedia.
-- `price` wajib berupa angka yang lebih besar dari 0.
-- `stock` opsional saat membuat item, default-nya `0`, dan harus berupa bilangan bulat nonnegatif.
-- `PUT` mendukung pembaruan parsial; field yang tidak dikirim tidak diubah.
-- `username` wajib nonkosong dan `email` wajib memuat `@`.
-- `role` pada registrasi wajib bernilai `user`.
-- ID yang tidak ditemukan menghasilkan status `404` dengan field serta alasan kesalahan.
-
-## Cara Menjalankan dan Verifikasi
-
-Jalankan `pip install -r requirements.txt`, lalu `python run.py`. Server lokal tersedia pada `http://127.0.0.1:5000`.
-
-Verifikasi menggunakan Flask test client sebelumnya mencakup 11 skenario kategori, item, dan user. Pengujian tersebut dilakukan sebelum field `stock` ditambahkan; perubahan `stock` belum diverifikasi ulang dengan test client.
+- Nama item wajib berupa teks yang tidak kosong.
+- Kategori item harus tersedia pada resource kategori.
+- Harga item harus berupa angka lebih besar dari 0.
+- Stok item harus berupa bilangan bulat `0` atau lebih.
+- Data disimpan pada list mock dalam memori; perubahan akan kembali ke data awal ketika aplikasi dimulai ulang.
 
