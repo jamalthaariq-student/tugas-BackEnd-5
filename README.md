@@ -1,4 +1,4 @@
-# Tugas Backend 5: REST API Flask
+# Tugas Backend 5
 
 REST API sederhana untuk mengelola kategori, item/produk, dan user. Aplikasi menggunakan Flask Blueprint dan memisahkan routing, validasi/logika bisnis, serta penyimpanan data mock.
 
