@@ -63,16 +63,6 @@ Menambahkan item. Harga wajib lebih besar dari 0; stok harus berupa bilangan bul
 }
 ```
 
-Mendaftarkan user:
-
-```json
-{
-  "username": "pengguna_baru",
-  "email": "pengguna@example.com",
-  "role": "user"
-}
-```
-
 ## Format Respons
 
 Respons sukses menggunakan format berikut:
