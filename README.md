@@ -43,14 +43,12 @@ Semua endpoint memakai prefix `/api/v1`. Relasi produk dan kategori ditunjukkan 
 
 | Method | URI                       | Input                                              | Respons sukses                                   | Respons gagal                                               |
 | ------ | ------------------------- | -------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------- |
-| GET    | `/api/v1/categories`      | Tidak ada                                          | `200`; daftar kategori dan jumlahnya pada `data` | Tidak ada kegagalan bisnis yang didefinisikan               |
 | GET    | `/api/v1/items`           | Query opsional `category` dan `min_price`          | `200`; daftar item dan jumlah hasil pada `data`  | `min_price` yang bukan integer tidak dipakai sebagai filter |
 | GET    | `/api/v1/items/<item_id>` | ID integer di URI                                  | `200`; item pada `data`                          | `404`; error berisi field `item_id` dan alasan              |
 | POST   | `/api/v1/items`           | `name`, `category`, `price`; `stock` opsional      | `201`; item baru pada `data`                     | `400`; error validasi berisi field dan alasan               |
 | PUT    | `/api/v1/items/<item_id>` | JSON parsial: `name`, `category`, `price`, `stock` | `200`; item yang diperbarui pada `data`          | `400`; input tidak valid. `404`; item tidak ditemukan       |
 | DELETE | `/api/v1/items/<item_id>` | ID integer di URI                                  | `200`; pesan berhasil dihapus                    | `404`; error berisi field `item_id` dan alasan              |
-| GET    | `/api/v1/users`           | Tidak ada                                          | `200`; daftar user dan jumlahnya pada `data`     | Tidak ada kegagalan bisnis yang didefinisikan               |
-| POST   | `/api/v1/users`           | `username`, `email`, dan `role: "user"`            | `201`; user baru pada `data`                     | `400`; error validasi berisi field dan alasan               |
+
 
 ### Contoh Request
 
